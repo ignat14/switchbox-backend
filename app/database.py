@@ -2,14 +2,11 @@ from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.config import settings
+from app.config import clean_database_url, settings
 
-connect_args = {"ssl": "require"} if settings.ENVIRONMENT == "production" else {}
+_url, _connect_args = clean_database_url(settings.DATABASE_URL)
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    connect_args=connect_args,
-)
+engine = create_async_engine(_url, connect_args=_connect_args)
 
 async_session = async_sessionmaker(engine, expire_on_commit=False)
 

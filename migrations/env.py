@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+from app.config import clean_database_url
 from app.models import Base  # noqa: F401 — registers all models
 
 load_dotenv()
@@ -19,7 +20,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-database_url = os.environ["DATABASE_URL"]
+database_url, _connect_args = clean_database_url(os.environ["DATABASE_URL"])
 
 
 def get_sync_url() -> str:
@@ -51,6 +52,7 @@ async def run_async_migrations() -> None:
         config_section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=_connect_args,
     )
 
     async with connectable.connect() as connection:
