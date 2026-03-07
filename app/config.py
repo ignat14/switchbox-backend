@@ -9,5 +9,13 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["local", "production"] = "local"
     DATABASE_URL: str
 
+    ADMIN_TOKEN: str = ""
+
+    R2_ACCOUNT_ID: str = ""
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_BUCKET_NAME: str = "tinyflags-configs"
+    R2_PUBLIC_URL: str = ""
+
 
 settings = Settings()

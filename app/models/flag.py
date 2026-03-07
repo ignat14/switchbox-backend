@@ -13,7 +13,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.base import Base
 
@@ -39,4 +39,8 @@ class Flag(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    rules: Mapped[list["Rule"]] = relationship(  # noqa: F821
+        cascade="all, delete-orphan", lazy="selectin"
     )

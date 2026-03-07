@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from sqlalchemy import text
 
 from app.database import async_session, engine
+from app.routers import admin, flags, projects, rules
 
 
 @asynccontextmanager
@@ -13,6 +14,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="TinyFlags Backend", lifespan=lifespan)
+
+app.include_router(projects.router)
+app.include_router(flags.router)
+app.include_router(rules.router)
+app.include_router(admin.router)
 
 
 @app.get("/health")
