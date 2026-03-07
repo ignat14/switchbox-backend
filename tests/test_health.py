@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -8,8 +9,16 @@ from fastapi.testclient import TestClient
 def client():
     from app.main import app
 
+    @asynccontextmanager
+    async def _noop_lifespan(app):
+        yield
+
+    original_router = app.router
+    original_lifespan = original_router.lifespan_context
+    original_router.lifespan_context = _noop_lifespan
     with TestClient(app, raise_server_exceptions=False) as c:
         yield c
+    original_router.lifespan_context = original_lifespan
 
 
 def test_health_returns_ok_when_db_connected(client):

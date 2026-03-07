@@ -1,4 +1,4 @@
-from app.database import Base
+from app.base import Base
 from app.models.audit_log import AuditLog
 from app.models.flag import Flag
 from app.models.project import Project
