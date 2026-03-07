@@ -8,8 +8,6 @@ from app.database import async_session, engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.connect() as conn:
-        await conn.execute(text("SELECT 1"))
     yield
     await engine.dispose()
 
