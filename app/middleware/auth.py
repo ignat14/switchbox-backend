@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +13,7 @@ async def require_admin(authorization: str = Header()) -> str:
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
     token = authorization.removeprefix("Bearer ")
-    if not settings.ADMIN_TOKEN or token != settings.ADMIN_TOKEN:
+    if not settings.ADMIN_TOKEN or not secrets.compare_digest(token, settings.ADMIN_TOKEN):
         raise HTTPException(status_code=401, detail="Invalid admin token")
     return token
 

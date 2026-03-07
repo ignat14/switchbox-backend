@@ -2,6 +2,7 @@ import hashlib
 import secrets
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,7 +41,7 @@ async def rotate_api_key(db: AsyncSession, project_id: UUID) -> tuple[Project, s
     result = await db.execute(select(Project).where(Project.id == project_id))
     project = result.scalar_one_or_none()
     if project is None:
-        raise ValueError("Project not found")
+        raise HTTPException(status_code=404, detail="Project not found")
     api_key = secrets.token_urlsafe(32)
     project.api_key_hash = _hash_key(api_key)
     await db.commit()

@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,7 +34,6 @@ async def remove_rule(db: AsyncSession, rule_id: UUID) -> None:
     result = await db.execute(select(Rule).where(Rule.id == rule_id))
     rule = result.scalar_one_or_none()
     if rule is None:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Rule not found")
     flag = await get_flag(db, rule.flag_id)
     await db.delete(rule)
