@@ -2,7 +2,6 @@ from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.base import Base
 from app.config import settings
 
 connect_args = {"ssl": "require"} if settings.ENVIRONMENT == "production" else {}
