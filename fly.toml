@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for tinyflags-backend on 2026-03-06T21:16:40+01:00
+# fly.toml app configuration file generated for switchbox-backend on 2026-03-06T21:16:40+01:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'tinyflags-backend'
+app = 'switchbox-backend'
 primary_region = 'ams'
 
 [build]

@@ -4,7 +4,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://tinyflags:tinyflags@db:5432/tinyflags
+      - DATABASE_URL=postgresql+asyncpg://switchbox:switchbox@db:5432/switchbox
       - ENVIRONMENT=local
     depends_on:
       db:
@@ -15,13 +15,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: tinyflags
-      POSTGRES_PASSWORD: tinyflags
-      POSTGRES_DB: tinyflags
+      POSTGRES_USER: switchbox
+      POSTGRES_PASSWORD: switchbox
+      POSTGRES_DB: switchbox
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tinyflags"]
+      test: ["CMD-SHELL", "pg_isready -U switchbox"]
       interval: 5s
       timeout: 3s
       retries: 5

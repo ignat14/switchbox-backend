@@ -13,7 +13,7 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
-app = FastAPI(title="TinyFlags Backend", lifespan=lifespan)
+app = FastAPI(title="Switchbox Backend", lifespan=lifespan)
 
 app.include_router(projects.router)
 app.include_router(flags.router)

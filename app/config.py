@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     R2_ACCOUNT_ID: str = ""
     R2_ACCESS_KEY_ID: str = ""
     R2_SECRET_ACCESS_KEY: str = ""
-    R2_BUCKET_NAME: str = "tinyflags-configs"
+    R2_BUCKET_NAME: str = "switchbox-configs"
     R2_PUBLIC_URL: str = ""
 
 

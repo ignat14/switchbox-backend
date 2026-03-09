@@ -559,7 +559,7 @@ wheels = [
 ]
 
 [[package]]
-name = "tinyflags-backend"
+name = "switchbox-backend"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
