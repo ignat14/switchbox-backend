@@ -161,7 +161,7 @@ uv run uvicorn app.main:app --reload
 | `R2_ACCOUNT_ID`       | No       | Cloudflare account ID                |
 | `R2_ACCESS_KEY_ID`    | No       | R2 S3-compatible access key          |
 | `R2_SECRET_ACCESS_KEY`| No       | R2 S3-compatible secret key          |
-| `R2_BUCKET_NAME`      | No       | R2 bucket name (default: flaggy-configs) |
+| `R2_BUCKET_NAME`      | No       | R2 bucket name (default: switchbox-configs) |
 | `R2_PUBLIC_URL`       | No       | Public R2 URL for SDK consumption    |
 
 When R2 vars are empty, the CDN publisher writes JSON files to `cdn_output/` locally.
