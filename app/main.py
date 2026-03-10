@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.database import async_session, engine
@@ -14,6 +15,18 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Switchbox Backend", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://switchbox-ui.pages.dev",
+        "http://localhost:5173",
+        "https://switchbox.dev",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(projects.router)
 app.include_router(flags.router)
