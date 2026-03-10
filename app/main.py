@@ -22,6 +22,7 @@ app.add_middleware(
         "https://switchbox-ui.pages.dev",
         "http://localhost:5173",
         "https://switchbox.dev",
+        "https://www.switchbox.dev",
     ],
     allow_credentials=True,
     allow_methods=["*"],
