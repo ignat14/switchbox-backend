@@ -13,9 +13,11 @@ def _hash_key(plaintext: str) -> str:
     return hashlib.sha256(plaintext.encode()).hexdigest()
 
 
-async def create_project(db: AsyncSession, name: str) -> tuple[Project, str]:
+async def create_project(
+    db: AsyncSession, name: str, user_id: UUID | None = None
+) -> tuple[Project, str]:
     api_key = secrets.token_urlsafe(32)
-    project = Project(name=name, api_key_hash=_hash_key(api_key))
+    project = Project(name=name, api_key_hash=_hash_key(api_key), user_id=user_id)
     db.add(project)
     try:
         await db.commit()
@@ -26,8 +28,14 @@ async def create_project(db: AsyncSession, name: str) -> tuple[Project, str]:
     return project, api_key
 
 
-async def list_projects(db: AsyncSession) -> list[Project]:
-    result = await db.execute(select(Project).order_by(Project.created_at.desc()))
+async def list_projects(
+    db: AsyncSession, user_id: UUID | None = None
+) -> list[Project]:
+    stmt = select(Project)
+    if user_id is not None:
+        stmt = stmt.where(Project.user_id == user_id)
+    stmt = stmt.order_by(Project.created_at.desc())
+    result = await db.execute(stmt)
     return list(result.scalars().all())
 
 

@@ -3,6 +3,9 @@ from unittest.mock import AsyncMock, patch
 
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test")
 os.environ["ADMIN_TOKEN"] = "test-admin-token"
+os.environ["JWT_SECRET"] = "test-jwt-secret"
+os.environ["GITHUB_CLIENT_ID"] = "test-client-id"
+os.environ["GITHUB_CLIENT_SECRET"] = "test-client-secret"
 
 import pytest
 import pytest_asyncio
@@ -13,7 +16,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from app.base import Base
 from app.database import get_db
 from app.main import app as fastapi_app
-from app.models import Flag, Project, Rule, AuditLog  # noqa: F401
+from app.models import Flag, Project, Rule, AuditLog, User  # noqa: F401
 
 # Render JSONB as JSON for SQLite tests
 compiles(JSONB, "sqlite")(lambda element, compiler, **kw: "JSON")

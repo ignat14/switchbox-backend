@@ -10,7 +10,9 @@ from app.services.audit_service import log_action
 from app.services.cdn_publisher import publish_flags
 
 
-async def create_flag(db: AsyncSession, project_id: UUID, data: FlagCreate) -> Flag:
+async def create_flag(
+    db: AsyncSession, project_id: UUID, data: FlagCreate, changed_by: str | None = None
+) -> Flag:
     flag = Flag(
         project_id=project_id,
         key=data.key,
@@ -26,7 +28,7 @@ async def create_flag(db: AsyncSession, project_id: UUID, data: FlagCreate) -> F
         await db.rollback()
         raise
     await db.refresh(flag)
-    await log_action(db, flag.id, "created", new_value={"key": flag.key})
+    await log_action(db, flag.id, "created", new_value={"key": flag.key}, changed_by=changed_by)
     await publish_flags(db, project_id, flag.environment)
     return flag
 
@@ -50,7 +52,9 @@ async def get_flag(db: AsyncSession, flag_id: UUID) -> Flag:
     return flag
 
 
-async def update_flag(db: AsyncSession, flag_id: UUID, data: FlagUpdate) -> Flag:
+async def update_flag(
+    db: AsyncSession, flag_id: UUID, data: FlagUpdate, changed_by: str | None = None
+) -> Flag:
     flag = await get_flag(db, flag_id)
     old = {"name": flag.name, "rollout_pct": flag.rollout_pct, "default_value": flag.default_value}
     update_data = data.model_dump(exclude_unset=True)
@@ -63,12 +67,14 @@ async def update_flag(db: AsyncSession, flag_id: UUID, data: FlagUpdate) -> Flag
         raise
     await db.refresh(flag)
     new = {"name": flag.name, "rollout_pct": flag.rollout_pct, "default_value": flag.default_value}
-    await log_action(db, flag_id, "updated", old_value=old, new_value=new)
+    await log_action(db, flag_id, "updated", old_value=old, new_value=new, changed_by=changed_by)
     await publish_flags(db, flag.project_id, flag.environment)
     return flag
 
 
-async def toggle_flag(db: AsyncSession, flag_id: UUID) -> Flag:
+async def toggle_flag(
+    db: AsyncSession, flag_id: UUID, changed_by: str | None = None
+) -> Flag:
     flag = await get_flag(db, flag_id)
     old_enabled = flag.enabled
     flag.enabled = not flag.enabled
@@ -79,7 +85,8 @@ async def toggle_flag(db: AsyncSession, flag_id: UUID) -> Flag:
         raise
     await db.refresh(flag)
     await log_action(
-        db, flag_id, "toggled", old_value={"enabled": old_enabled}, new_value={"enabled": flag.enabled}
+        db, flag_id, "toggled", old_value={"enabled": old_enabled}, new_value={"enabled": flag.enabled},
+        changed_by=changed_by,
     )
     await publish_flags(db, flag.project_id, flag.environment)
     return flag

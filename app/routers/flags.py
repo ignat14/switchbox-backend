@@ -4,21 +4,29 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.middleware.auth import require_admin
+from app.middleware.auth import get_current_user
+from app.models.user import User
 from app.schemas.audit import AuditLogResponse
 from app.schemas.flag import FlagCreate, FlagResponse, FlagUpdate
 from app.services import audit_service, flag_service
 
-router = APIRouter(tags=["flags"], dependencies=[Depends(require_admin)])
+router = APIRouter(tags=["flags"], dependencies=[Depends(get_current_user)])
+
+
+def _actor(user: User | None) -> str | None:
+    return user.github_login if user else "admin"
 
 
 @router.post(
     "/projects/{project_id}/flags", response_model=FlagResponse, status_code=201
 )
 async def create_flag(
-    project_id: UUID, body: FlagCreate, db: AsyncSession = Depends(get_db)
+    project_id: UUID,
+    body: FlagCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
 ):
-    return await flag_service.create_flag(db, project_id, body)
+    return await flag_service.create_flag(db, project_id, body, changed_by=_actor(user))
 
 
 @router.get("/projects/{project_id}/flags", response_model=list[FlagResponse])
@@ -37,14 +45,21 @@ async def get_flag(flag_id: UUID, db: AsyncSession = Depends(get_db)):
 
 @router.patch("/flags/{flag_id}", response_model=FlagResponse)
 async def update_flag(
-    flag_id: UUID, body: FlagUpdate, db: AsyncSession = Depends(get_db)
+    flag_id: UUID,
+    body: FlagUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
 ):
-    return await flag_service.update_flag(db, flag_id, body)
+    return await flag_service.update_flag(db, flag_id, body, changed_by=_actor(user))
 
 
 @router.post("/flags/{flag_id}/toggle", response_model=FlagResponse)
-async def toggle_flag(flag_id: UUID, db: AsyncSession = Depends(get_db)):
-    return await flag_service.toggle_flag(db, flag_id)
+async def toggle_flag(
+    flag_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
+):
+    return await flag_service.toggle_flag(db, flag_id, changed_by=_actor(user))
 
 
 @router.delete("/flags/{flag_id}", status_code=204)

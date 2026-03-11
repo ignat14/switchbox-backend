@@ -9,7 +9,7 @@ from app.logging_config import setup_logging
 from app.middleware.error_handler import global_exception_handler
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.config import settings
-from app.routers import admin, contact, flags, projects, rules
+from app.routers import admin, auth, contact, flags, projects, rules
 
 setup_logging()
 
@@ -45,6 +45,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(projects.router)
 app.include_router(flags.router)
 app.include_router(rules.router)

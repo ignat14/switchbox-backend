@@ -11,7 +11,9 @@ from app.services.cdn_publisher import publish_flags
 from app.services.flag_service import get_flag
 
 
-async def add_rule(db: AsyncSession, flag_id: UUID, data: RuleCreate) -> Rule:
+async def add_rule(
+    db: AsyncSession, flag_id: UUID, data: RuleCreate, changed_by: str | None = None
+) -> Rule:
     flag = await get_flag(db, flag_id)
     rule = Rule(
         flag_id=flag_id,
@@ -29,12 +31,13 @@ async def add_rule(db: AsyncSession, flag_id: UUID, data: RuleCreate) -> Rule:
     await log_action(
         db, flag_id, "rule_added",
         new_value={"attribute": rule.attribute, "operator": rule.operator},
+        changed_by=changed_by,
     )
     await publish_flags(db, flag.project_id, flag.environment)
     return rule
 
 
-async def remove_rule(db: AsyncSession, rule_id: UUID) -> None:
+async def remove_rule(db: AsyncSession, rule_id: UUID, changed_by: str | None = None) -> None:
     result = await db.execute(select(Rule).where(Rule.id == rule_id))
     rule = result.scalar_one_or_none()
     if rule is None:
@@ -49,5 +52,6 @@ async def remove_rule(db: AsyncSession, rule_id: UUID) -> None:
     await log_action(
         db, flag.id, "rule_removed",
         old_value={"attribute": rule.attribute, "operator": rule.operator},
+        changed_by=changed_by,
     )
     await publish_flags(db, flag.project_id, flag.environment)

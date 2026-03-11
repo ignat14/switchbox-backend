@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.middleware.auth import require_admin
+from app.middleware.auth import get_current_user
+from app.models.user import User
 from app.schemas.project import (
     ApiKeyRotateResponse,
     ProjectCreate,
@@ -13,12 +14,18 @@ from app.schemas.project import (
 )
 from app.services import project_service
 
-router = APIRouter(prefix="/projects", tags=["projects"], dependencies=[Depends(require_admin)])
+router = APIRouter(prefix="/projects", tags=["projects"], dependencies=[Depends(get_current_user)])
 
 
 @router.post("", response_model=ProjectCreateResponse, status_code=201)
-async def create_project(body: ProjectCreate, db: AsyncSession = Depends(get_db)):
-    project, api_key = await project_service.create_project(db, body.name)
+async def create_project(
+    body: ProjectCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
+):
+    project, api_key = await project_service.create_project(
+        db, body.name, user_id=user.id if user else None
+    )
     return ProjectCreateResponse(
         id=project.id,
         name=project.name,
@@ -28,8 +35,11 @@ async def create_project(body: ProjectCreate, db: AsyncSession = Depends(get_db)
 
 
 @router.get("", response_model=list[ProjectResponse])
-async def list_projects(db: AsyncSession = Depends(get_db)):
-    return await project_service.list_projects(db)
+async def list_projects(
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
+):
+    return await project_service.list_projects(db, user_id=user.id if user else None)
 
 
 @router.post("/{project_id}/rotate-key", response_model=ApiKeyRotateResponse)
