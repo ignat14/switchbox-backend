@@ -8,6 +8,7 @@ from app.database import async_session, engine
 from app.logging_config import setup_logging
 from app.middleware.error_handler import global_exception_handler
 from app.middleware.logging_middleware import RequestLoggingMiddleware
+from app.config import settings
 from app.routers import admin, contact, flags, projects, rules
 
 setup_logging()
@@ -19,7 +20,13 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
-app = FastAPI(title="Switchbox Backend", lifespan=lifespan)
+app = FastAPI(
+    title="Switchbox Backend",
+    lifespan=lifespan,
+    openapi_url=None if settings.ENVIRONMENT == "production" else "/openapi.json",
+    docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
+    redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
+)
 
 app.add_exception_handler(Exception, global_exception_handler)
 

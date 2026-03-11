@@ -20,7 +20,11 @@ async def add_rule(db: AsyncSession, flag_id: UUID, data: RuleCreate) -> Rule:
         value=data.value,
     )
     db.add(rule)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     await db.refresh(rule)
     await log_action(
         db, flag_id, "rule_added",
@@ -37,7 +41,11 @@ async def remove_rule(db: AsyncSession, rule_id: UUID) -> None:
         raise HTTPException(status_code=404, detail="Rule not found")
     flag = await get_flag(db, rule.flag_id)
     await db.delete(rule)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     await log_action(
         db, flag.id, "rule_removed",
         old_value={"attribute": rule.attribute, "operator": rule.operator},

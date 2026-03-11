@@ -21,8 +21,8 @@ from app.base import Base
 class Flag(Base):
     __tablename__ = "flags"
     __table_args__ = (
-        UniqueConstraint("project_id", "key", "environment"),
-        CheckConstraint("rollout_pct >= 0 AND rollout_pct <= 100"),
+        UniqueConstraint("project_id", "key", "environment", name="uq_flags_project_key_env"),
+        CheckConstraint("rollout_pct >= 0 AND rollout_pct <= 100", name="flags_rollout_pct_range_check"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)

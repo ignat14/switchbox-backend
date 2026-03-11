@@ -25,7 +25,7 @@ def clean_database_url(url: str) -> tuple[str, dict]:
 
 _url, _connect_args = clean_database_url(settings.DATABASE_URL)
 
-engine = create_async_engine(_url, connect_args=_connect_args)
+engine = create_async_engine(_url, connect_args=_connect_args, pool_pre_ping=True)
 
 async_session = async_sessionmaker(engine, expire_on_commit=False)
 

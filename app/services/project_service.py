@@ -17,7 +17,11 @@ async def create_project(db: AsyncSession, name: str) -> tuple[Project, str]:
     api_key = secrets.token_urlsafe(32)
     project = Project(name=name, api_key_hash=_hash_key(api_key))
     db.add(project)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     await db.refresh(project)
     return project, api_key
 
@@ -44,6 +48,10 @@ async def rotate_api_key(db: AsyncSession, project_id: UUID) -> tuple[Project, s
         raise HTTPException(status_code=404, detail="Project not found")
     api_key = secrets.token_urlsafe(32)
     project.api_key_hash = _hash_key(api_key)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     await db.refresh(project)
     return project, api_key

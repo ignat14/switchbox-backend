@@ -23,7 +23,11 @@ async def log_action(
         changed_by=changed_by,
     )
     db.add(entry)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     await db.refresh(entry)
     return entry
 

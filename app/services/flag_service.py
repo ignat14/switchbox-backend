@@ -20,7 +20,11 @@ async def create_flag(db: AsyncSession, project_id: UUID, data: FlagCreate) -> F
         default_value=data.default_value,
     )
     db.add(flag)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     await db.refresh(flag)
     await log_action(db, flag.id, "created", new_value={"key": flag.key})
     await publish_flags(db, project_id, flag.environment)
@@ -52,7 +56,11 @@ async def update_flag(db: AsyncSession, flag_id: UUID, data: FlagUpdate) -> Flag
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(flag, field, value)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     await db.refresh(flag)
     new = {"name": flag.name, "rollout_pct": flag.rollout_pct, "default_value": flag.default_value}
     await log_action(db, flag_id, "updated", old_value=old, new_value=new)
@@ -64,7 +72,11 @@ async def toggle_flag(db: AsyncSession, flag_id: UUID) -> Flag:
     flag = await get_flag(db, flag_id)
     old_enabled = flag.enabled
     flag.enabled = not flag.enabled
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     await db.refresh(flag)
     await log_action(
         db, flag_id, "toggled", old_value={"enabled": old_enabled}, new_value={"enabled": flag.enabled}
@@ -78,5 +90,9 @@ async def delete_flag(db: AsyncSession, flag_id: UUID) -> None:
     project_id = flag.project_id
     environment = flag.environment
     await db.delete(flag)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     await publish_flags(db, project_id, environment)
