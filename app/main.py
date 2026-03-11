@@ -5,7 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.database import async_session, engine
+from app.logging_config import setup_logging
+from app.middleware.error_handler import global_exception_handler
+from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.routers import admin, flags, projects, rules
+
+setup_logging()
 
 
 @asynccontextmanager
@@ -15,6 +20,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Switchbox Backend", lifespan=lifespan)
+
+app.add_exception_handler(Exception, global_exception_handler)
+
+app.add_middleware(RequestLoggingMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
