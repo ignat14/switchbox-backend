@@ -2,7 +2,7 @@ import os
 from unittest.mock import AsyncMock, patch
 
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test")
-os.environ.setdefault("ADMIN_TOKEN", "test-admin-token")
+os.environ["ADMIN_TOKEN"] = "test-admin-token"
 
 import pytest
 import pytest_asyncio
