@@ -143,8 +143,7 @@ fly secrets set \
   R2_ACCOUNT_ID="..." \
   R2_ACCESS_KEY_ID="..." \
   R2_SECRET_ACCESS_KEY="..." \
-  R2_BUCKET_NAME="..." \
-  R2_PUBLIC_URL="..."
+  R2_BUCKET_NAME="..."
 ```
 
 ## Environment Variables
@@ -157,7 +156,6 @@ fly secrets set \
 | `R2_ACCESS_KEY_ID`    | No       | R2 S3-compatible access key                         |
 | `R2_SECRET_ACCESS_KEY`| No       | R2 S3-compatible secret key                         |
 | `R2_BUCKET_NAME`      | No       | R2 bucket name (default: `switchbox-configs`)       |
-| `R2_PUBLIC_URL`       | No       | Public R2 URL for SDK consumption                   |
 
 When R2 vars are empty, the CDN publisher writes JSON files to `cdn_output/` locally.
 
