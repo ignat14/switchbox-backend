@@ -12,7 +12,8 @@ from app.audit.models import AuditLog  # noqa: F401
 from app.auth.models import User  # noqa: F401
 from app.base import Base
 from app.database import clean_database_url
-from app.flags.models import Flag  # noqa: F401
+from app.environments.models import Environment  # noqa: F401
+from app.flags.models import Flag, FlagEnvironment  # noqa: F401
 from app.projects.models import Project  # noqa: F401
 from app.rules.models import Rule  # noqa: F401
 

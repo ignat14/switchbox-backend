@@ -12,6 +12,7 @@ from app.admin import router as admin_router
 from app.auth import router as auth_router
 from app.config import settings
 from app.database import async_session, engine
+from app.environments import router as environments_router
 from app.flags import router as flags_router
 from app.logging_config import setup_logging
 from app.middleware.error_handler import global_exception_handler
@@ -57,6 +58,7 @@ app.add_middleware(
 
 app.include_router(auth_router.router)
 app.include_router(projects_router.router)
+app.include_router(environments_router.router)
 app.include_router(flags_router.router)
 app.include_router(rules_router.router)
 app.include_router(admin_router.router)

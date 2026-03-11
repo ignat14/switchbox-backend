@@ -240,11 +240,13 @@ async def test_audit_log_includes_changed_by(user_client):
 
     resp = await user_client.post(
         f"/projects/{project_id}/flags",
-        json={"key": "test_flag", "name": "Test Flag", "flag_type": "boolean", "environment": "dev"},
+        json={"key": "test_flag", "name": "Test Flag", "flag_type": "boolean"},
     )
-    flag_id = resp.json()["id"]
+    flag_data = resp.json()
+    flag_id = flag_data["id"]
+    dev_fe = next(fe for fe in flag_data["environments"] if fe["environment_name"] == "development")
 
-    await user_client.post(f"/flags/{flag_id}/toggle")
+    await user_client.post(f"/flag-environments/{dev_fe['id']}/toggle")
 
     resp = await user_client.get(f"/flags/{flag_id}/audit")
     assert resp.status_code == 200

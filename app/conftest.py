@@ -17,7 +17,8 @@ from app.audit.models import AuditLog  # noqa: F401
 from app.auth.models import User  # noqa: F401
 from app.base import Base
 from app.database import get_db
-from app.flags.models import Flag  # noqa: F401
+from app.environments.models import Environment  # noqa: F401
+from app.flags.models import Flag, FlagEnvironment  # noqa: F401
 from app.main import app as fastapi_app
 from app.projects.models import Project  # noqa: F401
 from app.rules.models import Rule  # noqa: F401

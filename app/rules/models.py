@@ -13,8 +13,8 @@ class Rule(Base):
     __tablename__ = "rules"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    flag_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("flags.id", ondelete="CASCADE")
+    flag_environment_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("flag_environments.id", ondelete="CASCADE")
     )
     attribute: Mapped[str] = mapped_column(String(255))
     operator: Mapped[str] = mapped_column(String(50))

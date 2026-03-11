@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.environments.service import create_default_environments
 from app.projects.models import Project
 
 
@@ -19,6 +20,8 @@ async def create_project(
     api_key = secrets.token_urlsafe(32)
     project = Project(name=name, api_key_hash=_hash_key(api_key), user_id=user_id)
     db.add(project)
+    await db.flush()
+    await create_default_environments(db, project.id)
     try:
         await db.commit()
     except Exception:

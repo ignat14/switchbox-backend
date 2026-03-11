@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.flags.models import Flag
+from app.flags.models import Flag, FlagEnvironment
 
 logger = logging.getLogger(__name__)
 
@@ -38,11 +38,13 @@ def _upload_json(key: str, body: str) -> None:
     )
 
 
-async def publish_flags(db: AsyncSession, project_id: UUID, environment: str) -> None:
+async def publish_flags(
+    db: AsyncSession, project_id: UUID, environment_id: UUID, environment_name: str
+) -> None:
     try:
+        # Get all flags for this project, then filter their flag_environments
         result = await db.execute(
-            select(Flag)
-            .where(Flag.project_id == project_id, Flag.environment == environment)
+            select(Flag).where(Flag.project_id == project_id)
         )
         flags = result.scalars().all()
 
@@ -51,23 +53,30 @@ async def publish_flags(db: AsyncSession, project_id: UUID, environment: str) ->
             "flags": {},
         }
         for flag in flags:
+            # Find the FlagEnvironment for this specific environment
+            fe = next(
+                (fe for fe in flag.flag_environments if fe.environment_id == environment_id),
+                None,
+            )
+            if fe is None:
+                continue
             config["flags"][flag.key] = {
-                "enabled": flag.enabled,
-                "rollout_pct": flag.rollout_pct,
+                "enabled": fe.enabled,
+                "rollout_pct": fe.rollout_pct,
                 "flag_type": flag.flag_type,
-                "default_value": flag.default_value,
+                "default_value": fe.default_value,
                 "rules": [
                     {
                         "attribute": rule.attribute,
                         "operator": rule.operator,
                         "value": rule.value,
                     }
-                    for rule in flag.rules
+                    for rule in fe.rules
                 ],
             }
 
         payload = json.dumps(config, indent=2)
-        object_key = f"{project_id}/{environment}/flags.json"
+        object_key = f"{project_id}/{environment_name}/flags.json"
 
         if settings.R2_ACCOUNT_ID:
             await asyncio.to_thread(_upload_json, object_key, payload)
@@ -78,4 +87,4 @@ async def publish_flags(db: AsyncSession, project_id: UUID, environment: str) ->
             out.write_text(payload)
             logger.info("Published locally: %s", out)
     except Exception:
-        logger.exception("CDN publish failed for %s/%s", project_id, environment)
+        logger.exception("CDN publish failed for %s/%s", project_id, environment_name)

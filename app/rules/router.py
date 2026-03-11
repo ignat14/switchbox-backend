@@ -12,15 +12,15 @@ from app.rules.schemas import RuleCreate, RuleResponse
 router = APIRouter(tags=["rules"], dependencies=[Depends(get_current_user)])
 
 
-@router.post("/flags/{flag_id}/rules", response_model=RuleResponse, status_code=201)
+@router.post("/flag-environments/{flag_env_id}/rules", response_model=RuleResponse, status_code=201)
 async def add_rule(
-    flag_id: UUID,
+    flag_env_id: UUID,
     body: RuleCreate,
     db: AsyncSession = Depends(get_db),
     user: User | None = Depends(get_current_user),
 ):
     changed_by = user.github_login if user else "admin"
-    return await rule_service.add_rule(db, flag_id, body, changed_by=changed_by)
+    return await rule_service.add_rule(db, flag_env_id, body, changed_by=changed_by)
 
 
 @router.delete("/rules/{rule_id}", status_code=204)

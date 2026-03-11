@@ -21,8 +21,7 @@ from app.base import Base
 class Flag(Base):
     __tablename__ = "flags"
     __table_args__ = (
-        UniqueConstraint("project_id", "key", "environment", name="uq_flags_project_key_env"),
-        CheckConstraint("rollout_pct >= 0 AND rollout_pct <= 100", name="flags_rollout_pct_range_check"),
+        UniqueConstraint("project_id", "key", name="uq_flags_project_key"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
@@ -30,10 +29,6 @@ class Flag(Base):
     key: Mapped[str] = mapped_column(String(255))
     name: Mapped[str] = mapped_column(String(255))
     flag_type: Mapped[str] = mapped_column(String(50), default="boolean")
-    enabled: Mapped[bool] = mapped_column(Boolean, default=False)
-    rollout_pct: Mapped[int] = mapped_column(Integer, default=0)
-    environment: Mapped[str] = mapped_column(String(50))
-    default_value: Mapped[Any | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -41,6 +36,33 @@ class Flag(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    flag_environments: Mapped[list["FlagEnvironment"]] = relationship(
+        cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class FlagEnvironment(Base):
+    __tablename__ = "flag_environments"
+    __table_args__ = (
+        UniqueConstraint("flag_id", "environment_id", name="uq_flag_env"),
+        CheckConstraint(
+            "rollout_pct >= 0 AND rollout_pct <= 100",
+            name="flag_environments_rollout_pct_range_check",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    flag_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("flags.id", ondelete="CASCADE")
+    )
+    environment_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("environments.id", ondelete="CASCADE")
+    )
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    rollout_pct: Mapped[int] = mapped_column(Integer, default=0)
+    default_value: Mapped[Any | None] = mapped_column(JSONB, nullable=True)
+
     rules: Mapped[list["Rule"]] = relationship(  # noqa: F821
         cascade="all, delete-orphan", lazy="selectin"
     )
+    environment: Mapped["Environment"] = relationship(lazy="selectin")  # noqa: F821

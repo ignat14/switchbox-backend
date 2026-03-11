@@ -1,9 +1,13 @@
+def _get_fe(flag_data, env_name="development"):
+    return next(fe for fe in flag_data["environments"] if fe["environment_name"] == env_name)
+
+
 async def test_create_flag_creates_audit_entry(client):
     proj = (await client.post("/projects", json={"name": "app"})).json()
     flag = (
         await client.post(
             f"/projects/{proj['id']}/flags",
-            json={"key": "my_flag", "name": "F", "environment": "dev"},
+            json={"key": "my_flag", "name": "F"},
         )
     ).json()
     resp = await client.get(f"/flags/{flag['id']}/audit")
@@ -17,14 +21,15 @@ async def test_toggle_creates_audit_with_old_new_values(client):
     flag = (
         await client.post(
             f"/projects/{proj['id']}/flags",
-            json={"key": "my_flag", "name": "F", "environment": "dev"},
+            json={"key": "my_flag", "name": "F"},
         )
     ).json()
-    await client.post(f"/flags/{flag['id']}/toggle")
+    dev_fe = _get_fe(flag)
+    await client.post(f"/flag-environments/{dev_fe['id']}/toggle")
     resp = await client.get(f"/flags/{flag['id']}/audit")
     toggle_entry = next(e for e in resp.json() if e["action"] == "toggled")
-    assert toggle_entry["old_value"] == {"enabled": False}
-    assert toggle_entry["new_value"] == {"enabled": True}
+    assert toggle_entry["old_value"]["enabled"] is False
+    assert toggle_entry["new_value"]["enabled"] is True
 
 
 async def test_update_rollout_creates_audit_with_old_new_pct(client):
@@ -32,12 +37,15 @@ async def test_update_rollout_creates_audit_with_old_new_pct(client):
     flag = (
         await client.post(
             f"/projects/{proj['id']}/flags",
-            json={"key": "my_flag", "name": "F", "environment": "dev"},
+            json={"key": "my_flag", "name": "F"},
         )
     ).json()
-    await client.patch(f"/flags/{flag['id']}", json={"rollout_pct": 50})
+    dev_fe = _get_fe(flag)
+    await client.patch(
+        f"/flag-environments/{dev_fe['id']}", json={"rollout_pct": 50}
+    )
     resp = await client.get(f"/flags/{flag['id']}/audit")
-    update_entry = next(e for e in resp.json() if e["action"] == "updated")
+    update_entry = next(e for e in resp.json() if e["action"] == "env_updated")
     assert update_entry["old_value"]["rollout_pct"] == 0
     assert update_entry["new_value"]["rollout_pct"] == 50
 
@@ -47,11 +55,12 @@ async def test_add_rule_creates_audit_entry(client):
     flag = (
         await client.post(
             f"/projects/{proj['id']}/flags",
-            json={"key": "my_flag", "name": "F", "environment": "dev"},
+            json={"key": "my_flag", "name": "F"},
         )
     ).json()
+    dev_fe = _get_fe(flag)
     await client.post(
-        f"/flags/{flag['id']}/rules",
+        f"/flag-environments/{dev_fe['id']}/rules",
         json={"attribute": "country", "operator": "equals", "value": "US"},
     )
     resp = await client.get(f"/flags/{flag['id']}/audit")
@@ -63,12 +72,13 @@ async def test_remove_rule_creates_audit_entry(client):
     flag = (
         await client.post(
             f"/projects/{proj['id']}/flags",
-            json={"key": "my_flag", "name": "F", "environment": "dev"},
+            json={"key": "my_flag", "name": "F"},
         )
     ).json()
+    dev_fe = _get_fe(flag)
     rule = (
         await client.post(
-            f"/flags/{flag['id']}/rules",
+            f"/flag-environments/{dev_fe['id']}/rules",
             json={"attribute": "country", "operator": "equals", "value": "US"},
         )
     ).json()
@@ -82,10 +92,11 @@ async def test_audit_entries_ordered_by_timestamp_desc(client):
     flag = (
         await client.post(
             f"/projects/{proj['id']}/flags",
-            json={"key": "my_flag", "name": "F", "environment": "dev"},
+            json={"key": "my_flag", "name": "F"},
         )
     ).json()
-    await client.post(f"/flags/{flag['id']}/toggle")
+    dev_fe = _get_fe(flag)
+    await client.post(f"/flag-environments/{dev_fe['id']}/toggle")
     await client.patch(f"/flags/{flag['id']}", json={"name": "Updated"})
     resp = await client.get(f"/flags/{flag['id']}/audit")
     entries = resp.json()
@@ -94,12 +105,11 @@ async def test_audit_entries_ordered_by_timestamp_desc(client):
 
 
 async def test_audit_entries_include_changed_by(client):
-    """changed_by is currently None since auth doesn't populate it, but field should exist."""
     proj = (await client.post("/projects", json={"name": "app"})).json()
     flag = (
         await client.post(
             f"/projects/{proj['id']}/flags",
-            json={"key": "my_flag", "name": "F", "environment": "dev"},
+            json={"key": "my_flag", "name": "F"},
         )
     ).json()
     resp = await client.get(f"/flags/{flag['id']}/audit")
