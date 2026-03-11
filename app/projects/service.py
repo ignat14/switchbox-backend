@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.project import Project
+from app.projects.models import Project
 
 
 def _hash_key(plaintext: str) -> str:

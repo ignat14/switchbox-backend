@@ -3,12 +3,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.audit import service as audit_service
+from app.auth.models import User
 from app.database import get_db
+from app.flags import service as flag_service
+from app.flags.schemas import FlagCreate, FlagResponse, FlagUpdate
+from app.audit.schemas import AuditLogResponse
 from app.middleware.auth import get_current_user
-from app.models.user import User
-from app.schemas.audit import AuditLogResponse
-from app.schemas.flag import FlagCreate, FlagResponse, FlagUpdate
-from app.services import audit_service, flag_service
 
 router = APIRouter(tags=["flags"], dependencies=[Depends(get_current_user)])
 

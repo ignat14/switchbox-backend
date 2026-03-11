@@ -39,7 +39,7 @@ async def test_rotate_api_key_returns_new_key(client):
 
 async def test_rotate_api_key_old_key_invalid(client, db_session):
     """After rotation, the old key should no longer resolve to the project."""
-    from app.services.project_service import get_project_by_api_key
+    from app.projects.service import get_project_by_api_key
 
     create = (await client.post("/projects", json={"name": "app"})).json()
     old_key = create["api_key"]

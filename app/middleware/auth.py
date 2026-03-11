@@ -5,12 +5,12 @@ from fastapi import Depends, Header, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.models import User
+from app.auth.service import verify_token
 from app.config import settings
 from app.database import get_db
-from app.models.project import Project
-from app.models.user import User
-from app.services.auth_service import verify_token
-from app.services.project_service import get_project_by_api_key
+from app.projects.models import Project
+from app.projects.service import get_project_by_api_key
 
 
 async def require_admin(authorization: str = Header()) -> str:

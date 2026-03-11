@@ -1,17 +1,27 @@
+import logging
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
-from fastapi import FastAPI
+import httpx
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, EmailStr
 from sqlalchemy import text
 
+from app.admin import router as admin_router
+from app.auth import router as auth_router
+from app.config import settings
 from app.database import async_session, engine
+from app.flags import router as flags_router
 from app.logging_config import setup_logging
 from app.middleware.error_handler import global_exception_handler
 from app.middleware.logging_middleware import RequestLoggingMiddleware
-from app.config import settings
-from app.routers import admin, auth, contact, flags, projects, rules
+from app.projects import router as projects_router
+from app.rules import router as rules_router
 
 setup_logging()
+
+logger = logging.getLogger("switchbox")
 
 
 @asynccontextmanager
@@ -45,13 +55,57 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(projects.router)
-app.include_router(flags.router)
-app.include_router(rules.router)
-app.include_router(admin.router)
-app.include_router(contact.router)
+app.include_router(auth_router.router)
+app.include_router(projects_router.router)
+app.include_router(flags_router.router)
+app.include_router(rules_router.router)
+app.include_router(admin_router.router)
 
+
+# --- Contact (inline, small endpoint) ---
+
+class ContactRequest(BaseModel):
+    email: EmailStr
+    message: str = ""
+
+
+contact_router = APIRouter(tags=["contact"])
+
+
+@contact_router.post("/contact", status_code=204)
+async def submit_contact(body: ContactRequest):
+    if not settings.DISCORD_WEBHOOK_URL:
+        logger.error("DISCORD_WEBHOOK_URL is not configured")
+        raise HTTPException(status_code=503, detail="Contact form is not available right now.")
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+    embed = {
+        "title": "New early access request",
+        "color": 0x8B5CF6,  # violet-500
+        "fields": [
+            {"name": "Email", "value": body.email, "inline": True},
+            {"name": "Date", "value": timestamp, "inline": True},
+        ],
+    }
+
+    if body.message.strip():
+        embed["fields"].append({"name": "Message", "value": body.message})
+
+    payload = {"embeds": [embed]}
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(settings.DISCORD_WEBHOOK_URL, json=payload, timeout=10)
+
+    if resp.status_code not in (200, 204):
+        logger.error("Discord webhook failed: %s %s", resp.status_code, resp.text)
+        raise HTTPException(status_code=502, detail="Failed to send message.")
+
+
+app.include_router(contact_router)
+
+
+# --- Health check ---
 
 @app.get("/health")
 async def health():

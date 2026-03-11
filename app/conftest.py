@@ -13,10 +13,14 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.dialects.postgresql import JSONB
 
+from app.audit.models import AuditLog  # noqa: F401
+from app.auth.models import User  # noqa: F401
 from app.base import Base
 from app.database import get_db
+from app.flags.models import Flag  # noqa: F401
 from app.main import app as fastapi_app
-from app.models import Flag, Project, Rule, AuditLog, User  # noqa: F401
+from app.projects.models import Project  # noqa: F401
+from app.rules.models import Rule  # noqa: F401
 
 # Render JSONB as JSON for SQLite tests
 compiles(JSONB, "sqlite")(lambda element, compiler, **kw: "JSON")
@@ -27,8 +31,8 @@ TestSessionLocal = async_sessionmaker(TEST_ENGINE, expire_on_commit=False)
 
 @pytest.fixture(autouse=True)
 def _mock_cdn_publisher():
-    with patch("app.services.flag_service.publish_flags", new_callable=AsyncMock) as m:
-        with patch("app.services.rule_service.publish_flags", new_callable=AsyncMock):
+    with patch("app.flags.service.publish_flags", new_callable=AsyncMock) as m:
+        with patch("app.rules.service.publish_flags", new_callable=AsyncMock):
             yield m
 
 

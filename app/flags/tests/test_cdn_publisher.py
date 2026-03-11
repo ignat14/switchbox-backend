@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
-from app.services.cdn_publisher import publish_flags
+from app.flags.cdn_publisher import publish_flags
 
 
 async def _publish_and_capture(db_session, pid, environment):
@@ -15,7 +15,7 @@ async def _publish_and_capture(db_session, pid, environment):
         written["content"] = content
 
     with (
-        patch("app.services.cdn_publisher.settings") as mock_settings,
+        patch("app.flags.cdn_publisher.settings") as mock_settings,
         patch.object(Path, "write_text", capture_write),
         patch.object(Path, "mkdir"),
     ):
@@ -152,7 +152,7 @@ async def test_cdn_called_after_rule_add(client):
             json={"key": "f", "name": "F", "environment": "dev"},
         )
     ).json()
-    with patch("app.services.rule_service.publish_flags", new_callable=AsyncMock) as mock_pub:
+    with patch("app.rules.service.publish_flags", new_callable=AsyncMock) as mock_pub:
         await client.post(
             f"/flags/{flag['id']}/rules",
             json={"attribute": "x", "operator": "equals", "value": "y"},
@@ -174,6 +174,6 @@ async def test_cdn_called_after_rule_remove(client):
             json={"attribute": "x", "operator": "equals", "value": "y"},
         )
     ).json()
-    with patch("app.services.rule_service.publish_flags", new_callable=AsyncMock) as mock_pub:
+    with patch("app.rules.service.publish_flags", new_callable=AsyncMock) as mock_pub:
         await client.delete(f"/rules/{rule['id']}")
         assert mock_pub.called

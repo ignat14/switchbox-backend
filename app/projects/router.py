@@ -3,16 +3,16 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.models import User
 from app.database import get_db
 from app.middleware.auth import get_current_user
-from app.models.user import User
-from app.schemas.project import (
+from app.projects import service as project_service
+from app.projects.schemas import (
     ApiKeyRotateResponse,
     ProjectCreate,
     ProjectCreateResponse,
     ProjectResponse,
 )
-from app.services import project_service
 
 router = APIRouter(prefix="/projects", tags=["projects"], dependencies=[Depends(get_current_user)])
 

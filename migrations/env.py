@@ -8,8 +8,13 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+from app.audit.models import AuditLog  # noqa: F401
+from app.auth.models import User  # noqa: F401
+from app.base import Base
 from app.database import clean_database_url
-from app.models import Base  # noqa: F401 — registers all models
+from app.flags.models import Flag  # noqa: F401
+from app.projects.models import Project  # noqa: F401
+from app.rules.models import Rule  # noqa: F401
 
 load_dotenv()
 

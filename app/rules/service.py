@@ -4,11 +4,11 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.rule import Rule
-from app.schemas.rule import RuleCreate
-from app.services.audit_service import log_action
-from app.services.cdn_publisher import publish_flags
-from app.services.flag_service import get_flag
+from app.audit.service import log_action
+from app.flags.cdn_publisher import publish_flags
+from app.flags.service import get_flag
+from app.rules.models import Rule
+from app.rules.schemas import RuleCreate
 
 
 async def add_rule(

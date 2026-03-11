@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.flags.cdn_publisher import publish_flags
 from app.middleware.auth import require_admin
-from app.services.cdn_publisher import publish_flags
 
 router = APIRouter(
     prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)]

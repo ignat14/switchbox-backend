@@ -3,13 +3,12 @@ from unittest.mock import AsyncMock, patch
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
+from app.auth.models import User
+from app.auth.service import create_access_token
 from app.base import Base
+from app.conftest import TEST_ENGINE, TestSessionLocal
 from app.database import get_db
 from app.main import app as fastapi_app
-from app.models.user import User
-from app.services.auth_service import create_access_token
-
-from tests.conftest import TEST_ENGINE, TestSessionLocal
 
 
 # --- Existing admin token tests ---
@@ -40,7 +39,7 @@ async def test_valid_admin_token_succeeds(client):
 
 async def test_sdk_auth_valid_api_key(client, db_session):
     """Valid API key via X-Api-Key resolves to the correct project."""
-    from app.services.project_service import get_project_by_api_key
+    from app.projects.service import get_project_by_api_key
 
     create_resp = await client.post("/projects", json={"name": "sdk-test"})
     api_key = create_resp.json()["api_key"]
@@ -51,7 +50,7 @@ async def test_sdk_auth_valid_api_key(client, db_session):
 
 
 async def test_sdk_auth_invalid_api_key(client, db_session):
-    from app.services.project_service import get_project_by_api_key
+    from app.projects.service import get_project_by_api_key
 
     project = await get_project_by_api_key(db_session, "totally-invalid-key")
     assert project is None
@@ -146,8 +145,8 @@ async def test_github_callback_success(auth_db):
     }
 
     with (
-        patch("app.routers.auth.exchange_github_code", new_callable=AsyncMock, return_value="fake-token"),
-        patch("app.routers.auth.fetch_github_user", new_callable=AsyncMock, return_value=mock_github_user),
+        patch("app.auth.router.exchange_github_code", new_callable=AsyncMock, return_value="fake-token"),
+        patch("app.auth.router.fetch_github_user", new_callable=AsyncMock, return_value=mock_github_user),
     ):
         transport = ASGITransport(app=fastapi_app)
         async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -170,7 +169,7 @@ async def test_github_callback_invalid_code(auth_db):
     fastapi_app.dependency_overrides[get_db] = override_get_db
 
     with patch(
-        "app.routers.auth.exchange_github_code",
+        "app.auth.router.exchange_github_code",
         new_callable=AsyncMock,
         side_effect=Exception("bad code"),
     ):

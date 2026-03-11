@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.schemas.rule import RuleResponse
+from app.rules.schemas import RuleResponse
 
 
 class FlagCreate(BaseModel):

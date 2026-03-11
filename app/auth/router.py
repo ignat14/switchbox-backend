@@ -6,17 +6,17 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
-from app.database import get_db
-from app.models.user import User
-from app.schemas.auth import AuthResponse, GitHubCallbackRequest, UserResponse
-from app.services.auth_service import (
+from app.auth.models import User
+from app.auth.schemas import AuthResponse, GitHubCallbackRequest, UserResponse
+from app.auth.service import (
     create_access_token,
     exchange_github_code,
     fetch_github_user,
     upsert_user,
     verify_token,
 )
+from app.config import settings
+from app.database import get_db
 
 logger = logging.getLogger(__name__)
 

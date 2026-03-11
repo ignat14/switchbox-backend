@@ -101,7 +101,7 @@ async def test_remove_rule_triggers_cdn_publish(client):
             json={"attribute": "email", "operator": "equals", "value": "x"},
         )
     ).json()
-    with patch("app.services.rule_service.publish_flags", new_callable=AsyncMock) as mock_pub:
+    with patch("app.rules.service.publish_flags", new_callable=AsyncMock) as mock_pub:
         await client.delete(f"/rules/{rule['id']}")
         assert mock_pub.called
 

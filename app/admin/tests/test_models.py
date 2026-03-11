@@ -1,5 +1,9 @@
 def test_models_importable():
-    from app.models import AuditLog, Base, Flag, Project, Rule
+    from app.audit.models import AuditLog
+    from app.base import Base
+    from app.flags.models import Flag
+    from app.projects.models import Project
+    from app.rules.models import Rule
 
     assert Base is not None
     assert Project.__tablename__ == "projects"
@@ -9,7 +13,7 @@ def test_models_importable():
 
 
 def test_flag_has_unique_constraint():
-    from app.models import Flag
+    from app.flags.models import Flag
 
     unique_constraints = [
         c
@@ -23,7 +27,7 @@ def test_flag_has_unique_constraint():
 
 
 def test_flag_has_check_constraint():
-    from app.models import Flag
+    from app.flags.models import Flag
 
     check_constraints = [
         c

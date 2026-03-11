@@ -4,10 +4,10 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.flag import Flag
-from app.schemas.flag import FlagCreate, FlagUpdate
-from app.services.audit_service import log_action
-from app.services.cdn_publisher import publish_flags
+from app.audit.service import log_action
+from app.flags.cdn_publisher import publish_flags
+from app.flags.models import Flag
+from app.flags.schemas import FlagCreate, FlagUpdate
 
 
 async def create_flag(

@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.models.flag import Flag
+from app.flags.models import Flag
 
 logger = logging.getLogger(__name__)
 
