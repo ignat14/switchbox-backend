@@ -17,5 +17,7 @@ class Settings(BaseSettings):
     R2_BUCKET_NAME: str = "switchbox-configs"
     R2_PUBLIC_URL: str = ""
 
+    DISCORD_WEBHOOK_URL: str = ""
+
 
 settings = Settings()

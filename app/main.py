@@ -8,7 +8,7 @@ from app.database import async_session, engine
 from app.logging_config import setup_logging
 from app.middleware.error_handler import global_exception_handler
 from app.middleware.logging_middleware import RequestLoggingMiddleware
-from app.routers import admin, flags, projects, rules
+from app.routers import admin, contact, flags, projects, rules
 
 setup_logging()
 
@@ -42,6 +42,7 @@ app.include_router(projects.router)
 app.include_router(flags.router)
 app.include_router(rules.router)
 app.include_router(admin.router)
+app.include_router(contact.router)
 
 
 @app.get("/health")
