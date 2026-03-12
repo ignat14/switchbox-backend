@@ -42,6 +42,14 @@ async def list_projects(
     return list(result.scalars().all())
 
 
+async def get_project(db: AsyncSession, project_id: UUID) -> Project:
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+
 async def get_project_by_api_key(
     db: AsyncSession, plaintext_key: str
 ) -> Project | None:

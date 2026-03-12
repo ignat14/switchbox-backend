@@ -39,6 +39,8 @@ class FlagResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    project_id: UUID
+    project_name: str | None = None
     key: str
     name: str
     flag_type: str

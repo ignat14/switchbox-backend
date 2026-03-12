@@ -15,6 +15,7 @@ from app.flags.schemas import FlagCreate, FlagEnvironmentUpdate, FlagUpdate
 def _flag_query():
     """Return a base select for Flag with all nested relationships eagerly loaded."""
     return select(Flag).options(
+        selectinload(Flag.project),
         selectinload(Flag.flag_environments)
         .selectinload(FlagEnvironment.rules),
         selectinload(Flag.flag_environments)
@@ -54,6 +55,8 @@ def _fe_to_dict(fe: FlagEnvironment) -> dict:
 def _flag_to_dict(flag: Flag) -> dict:
     return {
         "id": str(flag.id),
+        "project_id": str(flag.project_id),
+        "project_name": flag.project.name if flag.project else None,
         "key": flag.key,
         "name": flag.name,
         "flag_type": flag.flag_type,

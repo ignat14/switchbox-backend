@@ -36,6 +36,7 @@ class Flag(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    project: Mapped["Project"] = relationship(lazy="selectin")  # noqa: F821
     flag_environments: Mapped[list["FlagEnvironment"]] = relationship(
         cascade="all, delete-orphan", lazy="selectin"
     )

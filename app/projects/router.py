@@ -42,6 +42,14 @@ async def list_projects(
     return await project_service.list_projects(db, user_id=user.id if user else None)
 
 
+@router.get("/{project_id}", response_model=ProjectResponse)
+async def get_project(
+    project_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    return await project_service.get_project(db, project_id)
+
+
 @router.post("/{project_id}/rotate-key", response_model=ApiKeyRotateResponse)
 async def rotate_key(project_id: UUID, db: AsyncSession = Depends(get_db)):
     _, api_key = await project_service.rotate_api_key(db, project_id)
