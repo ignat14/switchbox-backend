@@ -7,9 +7,11 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://switchbox:switchbox@db:5432/switchbox
+    volumes:
+      - .:/app
     command: >
       sh -c "uv run alembic upgrade head &&
-             uv run uvicorn app.main:app --host 0.0.0.0 --port 8000"
+             uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
       db:
         condition: service_healthy

@@ -109,7 +109,7 @@ async def create_flag(
     await log_action(db, flag.id, "created", new_value={"key": flag.key}, changed_by=changed_by)
 
     for env in environments:
-        await publish_flags(db, project_id, env.id, env.name)
+        await publish_flags(db, project_id, env.id, env.sdk_key)
 
     return _flag_to_dict(flag)
 
@@ -183,7 +183,7 @@ async def update_flag_environment(
         changed_by=changed_by,
     )
     flag = await _load_flag(db, flag_id)
-    await publish_flags(db, flag.project_id, fe.environment_id, fe.environment.name)
+    await publish_flags(db, flag.project_id, fe.environment_id, fe.environment.sdk_key)
     return _flag_to_dict(flag)
 
 
@@ -207,19 +207,19 @@ async def toggle_flag_environment(
         changed_by=changed_by,
     )
     flag = await _load_flag(db, flag_id)
-    await publish_flags(db, flag.project_id, fe.environment_id, fe.environment.name)
+    await publish_flags(db, flag.project_id, fe.environment_id, fe.environment.sdk_key)
     return _flag_to_dict(flag)
 
 
 async def delete_flag(db: AsyncSession, flag_id: UUID) -> None:
     flag = await _load_flag(db, flag_id)
     project_id = flag.project_id
-    env_info = [(fe.environment_id, fe.environment.name) for fe in flag.flag_environments]
+    env_info = [(fe.environment_id, fe.environment.sdk_key) for fe in flag.flag_environments]
     await db.delete(flag)
     try:
         await db.commit()
     except Exception:
         await db.rollback()
         raise
-    for env_id, env_name in env_info:
-        await publish_flags(db, project_id, env_id, env_name)
+    for env_id, sdk_key in env_info:
+        await publish_flags(db, project_id, env_id, sdk_key)

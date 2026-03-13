@@ -29,5 +29,5 @@ async def republish(
     env = result.scalar_one_or_none()
     if env is None:
         raise HTTPException(status_code=404, detail="Environment not found")
-    await publish_flags(db, project_id, environment_id, env.name)
+    await publish_flags(db, project_id, environment_id, env.sdk_key)
     return {"status": "published"}

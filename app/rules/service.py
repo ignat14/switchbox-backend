@@ -38,7 +38,7 @@ async def add_rule(
         },
         changed_by=changed_by,
     )
-    await publish_flags(db, flag.project_id, fe.environment_id, fe.environment.name)
+    await publish_flags(db, flag.project_id, fe.environment_id, fe.environment.sdk_key)
     return rule
 
 
@@ -64,4 +64,4 @@ async def remove_rule(db: AsyncSession, rule_id: UUID, changed_by: str | None = 
         },
         changed_by=changed_by,
     )
-    await publish_flags(db, flag.project_id, fe.environment_id, fe.environment.name)
+    await publish_flags(db, flag.project_id, fe.environment_id, fe.environment.sdk_key)

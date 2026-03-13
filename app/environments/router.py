@@ -51,6 +51,17 @@ async def update_environment(
     return await env_service.update_environment(db, environment_id, body)
 
 
+@router.post(
+    "/environments/{environment_id}/rotate-sdk-key",
+    response_model=EnvironmentResponse,
+)
+async def rotate_sdk_key(
+    environment_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    return await env_service.rotate_sdk_key(db, environment_id)
+
+
 @router.delete("/environments/{environment_id}", status_code=204)
 async def delete_environment(
     environment_id: UUID,
