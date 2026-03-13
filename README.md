@@ -100,6 +100,18 @@ All endpoints except `/health` require `Authorization: Bearer {ADMIN_TOKEN}`.
 | DELETE | `/flags/{flag_id}`             | Delete flag (cascades to rules)       |
 | GET    | `/flags/{flag_id}/audit`       | Get audit log                         |
 
+### Environments
+
+| Method | Path                                        | Description                |
+|--------|---------------------------------------------|----------------------------|
+| GET    | `/projects/{project_id}/environments`       | List environments          |
+| POST   | `/projects/{project_id}/environments`       | Create environment         |
+| PATCH  | `/environments/{environment_id}`            | Rename environment         |
+| DELETE | `/environments/{environment_id}`            | Delete environment         |
+| POST   | `/environments/{environment_id}/rotate-sdk-key` | Rotate SDK key (24h grace) |
+
+Each environment has a unique SDK key used for CDN paths and SDK authentication. On rotation, the old key remains active for 24 hours.
+
 ### Rules
 
 | Method | Path                     | Description |
@@ -120,7 +132,7 @@ Every flag or rule mutation triggers `publish_flags()`:
 
 1. Queries all flags + rules for the project/environment
 2. Builds a JSON config keyed by flag key (O(1) SDK lookups)
-3. Uploads to R2 at `{project_id}/{environment}/flags.json`
+3. Uploads to R2 at `{sdk_key}/flags.json` (and `{previous_sdk_key}/flags.json` during grace period)
 4. Sets `Cache-Control: public, max-age=30`
 
 If R2 is not configured, it writes to `cdn_output/` locally. If the upload fails, the error is logged but the API request still succeeds — the database is the source of truth.
