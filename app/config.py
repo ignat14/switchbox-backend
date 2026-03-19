@@ -16,8 +16,6 @@ class Settings(BaseSettings):
     R2_SECRET_ACCESS_KEY: str = ""
     R2_BUCKET_NAME: str = "switchbox-configs"
 
-    DISCORD_WEBHOOK_URL: str = ""
-
     GITHUB_CLIENT_ID: str = ""
     GITHUB_CLIENT_SECRET: str = ""
     JWT_SECRET: str = ""
