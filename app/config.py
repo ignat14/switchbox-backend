@@ -21,5 +21,7 @@ class Settings(BaseSettings):
     JWT_SECRET: str = ""
     FRONTEND_URL: str = "http://localhost:5173"
 
+    DISCORD_WEBHOOK_URL: str = ""
+
 
 settings = Settings()
