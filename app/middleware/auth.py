@@ -9,8 +9,6 @@ from app.auth.models import User
 from app.auth.service import verify_token
 from app.config import settings
 from app.database import get_db
-from app.projects.models import Project
-from app.projects.service import get_project_by_api_key
 
 
 async def require_admin(authorization: str = Header()) -> str:
@@ -46,12 +44,3 @@ async def get_current_user(
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
     return user
-
-
-async def require_api_key(
-    x_api_key: str = Header(), db: AsyncSession = Depends(get_db)
-) -> Project:
-    project = await get_project_by_api_key(db, x_api_key)
-    if project is None:
-        raise HTTPException(status_code=401, detail="Invalid API key")
-    return project

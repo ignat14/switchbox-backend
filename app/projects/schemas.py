@@ -14,11 +14,3 @@ class ProjectResponse(BaseModel):
     id: UUID
     name: str
     created_at: datetime
-
-
-class ProjectCreateResponse(ProjectResponse):
-    api_key: str
-
-
-class ApiKeyRotateResponse(BaseModel):
-    api_key: str
