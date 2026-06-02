@@ -7,7 +7,7 @@ from app.auth.models import User
 from app.database import get_db
 from app.middleware.auth import get_current_user
 from app.rules import service as rule_service
-from app.rules.schemas import RuleCreate, RuleResponse
+from app.rules.schemas import RuleCreate, RuleResponse, RuleUpdate
 
 router = APIRouter(tags=["rules"], dependencies=[Depends(get_current_user)])
 
@@ -21,6 +21,17 @@ async def add_rule(
 ):
     changed_by = user.github_login if user else "admin"
     return await rule_service.add_rule(db, flag_env_id, body, changed_by=changed_by)
+
+
+@router.patch("/rules/{rule_id}", response_model=RuleResponse)
+async def edit_rule(
+    rule_id: UUID,
+    body: RuleUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user),
+):
+    changed_by = user.github_login if user else "admin"
+    return await rule_service.update_rule(db, rule_id, body, changed_by=changed_by)
 
 
 @router.delete("/rules/{rule_id}", status_code=204)
