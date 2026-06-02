@@ -8,6 +8,7 @@ from uuid import UUID
 import boto3
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.config import settings
 from app.flags.models import Flag, FlagEnvironment
@@ -60,9 +61,22 @@ async def publish_flags(
     so SDKs using the old key continue to receive updates.
     """
     try:
-        # Get all flags for this project, then filter their flag_environments
+        # Get all flags for this project, then filter their flag_environments.
+        # populate_existing=True forces SQLAlchemy to refresh already-loaded
+        # objects and their relationship collections from the database. Without
+        # it, the request session's identity map (with expire_on_commit=False)
+        # would hand back a stale fe.rules collection that omits rules added in
+        # the same request, so freshly created/deleted rules would be missing
+        # from the published CDN JSON.
         result = await db.execute(
-            select(Flag).where(Flag.project_id == project_id)
+            select(Flag)
+            .where(Flag.project_id == project_id)
+            .options(
+                selectinload(Flag.flag_environments).selectinload(
+                    FlagEnvironment.rules
+                )
+            )
+            .execution_options(populate_existing=True)
         )
         flags = result.scalars().all()
 

@@ -91,6 +91,101 @@ async def test_publish_includes_rules(client, db_session):
     assert flag_data["rules"][0]["attribute"] == "email"
 
 
+def _capture_real_publish():
+    """Patch context that lets the REAL publish_flags run (overriding the autouse
+    mock in app.rules.service) while capturing every payload written to a CDN path.
+
+    Returns the list that captured payloads (parsed JSON) are appended to.
+    Use as: with _capture_real_publish() as writes: ...
+    """
+    from contextlib import contextmanager
+
+    from app.flags import cdn_publisher
+
+    @contextmanager
+    def _ctx():
+        writes = []
+
+        def capture(object_key, payload):
+            writes.append((object_key, json.loads(payload)))
+
+        with (
+            patch.object(cdn_publisher, "_write_to_path", capture),
+            patch("app.rules.service.publish_flags", cdn_publisher.publish_flags),
+        ):
+            yield writes
+
+    return _ctx()
+
+
+async def test_rule_added_via_service_appears_in_published_json(client, db_session):
+    """Regression: a rule added through the real service path must appear in the
+    JSON published by that same request's publish_flags call. Previously the
+    request session's stale identity-map fe.rules collection (expire_on_commit=
+    False, rule inserted by raw FK) caused the freshly added rule to be dropped."""
+    from uuid import UUID
+
+    from app.rules import service as rule_service
+    from app.rules.schemas import RuleCreate
+
+    proj = (await client.post("/projects", json={"name": "app"})).json()
+    flag = (
+        await client.post(
+            f"/projects/{proj['id']}/flags",
+            json={"key": "my_flag", "name": "F"},
+        )
+    ).json()
+    dev_fe = _get_fe(flag)
+    fe_id = UUID(dev_fe["id"])
+
+    with _capture_real_publish() as writes:
+        await rule_service.add_rule(
+            db_session,
+            fe_id,
+            RuleCreate(attribute="user_id", operator="equals", value="42"),
+        )
+        await rule_service.add_rule(
+            db_session,
+            fe_id,
+            RuleCreate(attribute="plan", operator="equals", value="pro"),
+        )
+
+    # The payload published by the second add_rule must contain both rules.
+    _, last = writes[-1]
+    attrs = {r["attribute"] for r in last["flags"]["my_flag"]["rules"]}
+    assert attrs == {"user_id", "plan"}, f"published rules were stale: {attrs}"
+
+
+async def test_removed_rule_drops_from_published_json(client, db_session):
+    """Regression: a rule removed through the real service path must be absent
+    from the JSON published by that same request."""
+    from uuid import UUID
+
+    from app.rules import service as rule_service
+    from app.rules.schemas import RuleCreate
+
+    proj = (await client.post("/projects", json={"name": "app"})).json()
+    flag = (
+        await client.post(
+            f"/projects/{proj['id']}/flags",
+            json={"key": "my_flag", "name": "F"},
+        )
+    ).json()
+    dev_fe = _get_fe(flag)
+    fe_id = UUID(dev_fe["id"])
+
+    with _capture_real_publish() as writes:
+        rule = await rule_service.add_rule(
+            db_session,
+            fe_id,
+            RuleCreate(attribute="user_id", operator="equals", value="42"),
+        )
+        await rule_service.remove_rule(db_session, rule.id)
+
+    _, last = writes[-1]
+    assert last["flags"]["my_flag"]["rules"] == []
+
+
 async def test_publish_version_is_iso_timestamp(client, db_session):
     proj = (await client.post("/projects", json={"name": "app"})).json()
     pid = proj["id"]
