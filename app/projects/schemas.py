@@ -14,3 +14,4 @@ class ProjectResponse(BaseModel):
     id: UUID
     name: str
     created_at: datetime
+    flag_count: int = 0
