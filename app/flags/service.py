@@ -62,7 +62,13 @@ def _flag_to_dict(flag: Flag) -> dict:
         "flag_type": flag.flag_type,
         "created_at": flag.created_at,
         "updated_at": flag.updated_at,
-        "environments": [_fe_to_dict(fe) for fe in flag.flag_environments],
+        "environments": [
+            _fe_to_dict(fe)
+            for fe in sorted(
+                flag.flag_environments,
+                key=lambda fe: (fe.environment.position, fe.environment.created_at),
+            )
+        ],
     }
 
 

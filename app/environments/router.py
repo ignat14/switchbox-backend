@@ -7,6 +7,7 @@ from app.database import get_db
 from app.environments import service as env_service
 from app.environments.schemas import (
     EnvironmentCreate,
+    EnvironmentReorder,
     EnvironmentResponse,
     EnvironmentUpdate,
 )
@@ -37,6 +38,18 @@ async def create_environment(
     db: AsyncSession = Depends(get_db),
 ):
     return await env_service.create_environment(db, project_id, body)
+
+
+@router.patch(
+    "/projects/{project_id}/environments/reorder",
+    response_model=list[EnvironmentResponse],
+)
+async def reorder_environments(
+    project_id: UUID,
+    body: EnvironmentReorder,
+    db: AsyncSession = Depends(get_db),
+):
+    return await env_service.reorder_environments(db, project_id, body)
 
 
 @router.patch(

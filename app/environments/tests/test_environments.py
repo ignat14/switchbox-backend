@@ -104,3 +104,71 @@ async def test_environment_name_allows_spaces(client):
     )
     assert resp.status_code == 201
     assert resp.json()["name"] == "Staging 2"
+
+
+async def test_default_environments_have_sequential_positions(client):
+    proj = (await client.post("/projects", json={"name": "app"})).json()
+    envs = (await client.get(f"/projects/{proj['id']}/environments")).json()
+    assert [e["position"] for e in envs] == [0, 1]
+    assert [e["name"] for e in envs] == ["development", "production"]
+
+
+async def test_new_environment_appended_at_end(client):
+    proj = (await client.post("/projects", json={"name": "app"})).json()
+    await client.post(f"/projects/{proj['id']}/environments", json={"name": "staging"})
+    envs = (await client.get(f"/projects/{proj['id']}/environments")).json()
+    assert [e["name"] for e in envs] == ["development", "production", "staging"]
+    assert [e["position"] for e in envs] == [0, 1, 2]
+
+
+async def test_reorder_environments(client):
+    proj = (await client.post("/projects", json={"name": "app"})).json()
+    await client.post(f"/projects/{proj['id']}/environments", json={"name": "staging"})
+    envs = (await client.get(f"/projects/{proj['id']}/environments")).json()
+
+    reversed_ids = [e["id"] for e in reversed(envs)]
+    resp = await client.patch(
+        f"/projects/{proj['id']}/environments/reorder",
+        json={"environment_ids": reversed_ids},
+    )
+    assert resp.status_code == 200
+    reordered = resp.json()
+    assert [e["id"] for e in reordered] == reversed_ids
+    assert [e["position"] for e in reordered] == [0, 1, 2]
+
+    # Order persists on subsequent listing
+    again = (await client.get(f"/projects/{proj['id']}/environments")).json()
+    assert [e["id"] for e in again] == reversed_ids
+
+
+async def test_reorder_rejects_mismatched_ids(client):
+    proj = (await client.post("/projects", json={"name": "app"})).json()
+    envs = (await client.get(f"/projects/{proj['id']}/environments")).json()
+    # Drop one id — not a full set
+    resp = await client.patch(
+        f"/projects/{proj['id']}/environments/reorder",
+        json={"environment_ids": [envs[0]["id"]]},
+    )
+    assert resp.status_code == 400
+
+
+async def test_reorder_reflected_in_flag_environments(client):
+    proj = (await client.post("/projects", json={"name": "app"})).json()
+    envs = (await client.get(f"/projects/{proj['id']}/environments")).json()
+
+    with patch("app.flags.cdn_publisher.publish_flags", new_callable=AsyncMock):
+        flag = (
+            await client.post(
+                f"/projects/{proj['id']}/flags",
+                json={"key": "my_flag", "name": "My Flag", "flag_type": "boolean"},
+            )
+        ).json()
+
+    reversed_ids = [e["id"] for e in reversed(envs)]
+    await client.patch(
+        f"/projects/{proj['id']}/environments/reorder",
+        json={"environment_ids": reversed_ids},
+    )
+
+    flag = (await client.get(f"/flags/{flag['id']}")).json()
+    assert [fe["environment_id"] for fe in flag["environments"]] == reversed_ids

@@ -2,11 +2,15 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.environments.models import Environment, generate_sdk_key
-from app.environments.schemas import EnvironmentCreate, EnvironmentUpdate
+from app.environments.schemas import (
+    EnvironmentCreate,
+    EnvironmentReorder,
+    EnvironmentUpdate,
+)
 
 
 DEFAULT_ENVIRONMENTS = ["development", "production"]
@@ -16,8 +20,8 @@ SDK_KEY_GRACE_PERIOD = timedelta(hours=24)
 
 async def create_default_environments(db: AsyncSession, project_id: UUID) -> list[Environment]:
     envs = []
-    for name in DEFAULT_ENVIRONMENTS:
-        env = Environment(project_id=project_id, name=name)
+    for position, name in enumerate(DEFAULT_ENVIRONMENTS):
+        env = Environment(project_id=project_id, name=name, position=position)
         db.add(env)
         envs.append(env)
     await db.flush()
@@ -28,7 +32,7 @@ async def list_environments(db: AsyncSession, project_id: UUID) -> list[Environm
     result = await db.execute(
         select(Environment)
         .where(Environment.project_id == project_id)
-        .order_by(Environment.created_at)
+        .order_by(Environment.position, Environment.created_at)
     )
     return list(result.scalars().all())
 
@@ -46,7 +50,14 @@ async def get_environment(db: AsyncSession, environment_id: UUID) -> Environment
 async def create_environment(
     db: AsyncSession, project_id: UUID, data: EnvironmentCreate
 ) -> Environment:
-    env = Environment(project_id=project_id, name=data.name)
+    # Append new environments to the end of the ordered list
+    max_position = await db.scalar(
+        select(func.max(Environment.position)).where(
+            Environment.project_id == project_id
+        )
+    )
+    next_position = 0 if max_position is None else max_position + 1
+    env = Environment(project_id=project_id, name=data.name, position=next_position)
     db.add(env)
     try:
         await db.commit()
@@ -84,6 +95,36 @@ async def update_environment(
         raise
     await db.refresh(env)
     return env
+
+
+async def reorder_environments(
+    db: AsyncSession, project_id: UUID, data: EnvironmentReorder
+) -> list[Environment]:
+    """Persist a new ordering for a project's environments.
+
+    The request must list exactly the environments belonging to the project.
+    Positions are assigned by index in the provided order.
+    """
+    envs = await list_environments(db, project_id)
+    env_by_id = {env.id: env for env in envs}
+
+    requested_ids = data.environment_ids
+    if set(requested_ids) != set(env_by_id) or len(requested_ids) != len(env_by_id):
+        raise HTTPException(
+            status_code=400,
+            detail="Reorder must include exactly the project's environments",
+        )
+
+    for position, env_id in enumerate(requested_ids):
+        env_by_id[env_id].position = position
+
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+
+    return await list_environments(db, project_id)
 
 
 async def rotate_sdk_key(db: AsyncSession, environment_id: UUID) -> Environment:

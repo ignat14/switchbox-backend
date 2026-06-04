@@ -2,7 +2,7 @@ import secrets
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.base import Base
@@ -22,6 +22,7 @@ class Environment(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String(100))
+    position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     sdk_key: Mapped[str] = mapped_column(String(50), unique=True, default=generate_sdk_key)
     previous_sdk_key: Mapped[str | None] = mapped_column(String(50), nullable=True)
     previous_sdk_key_expires_at: Mapped[datetime | None] = mapped_column(
