@@ -23,5 +23,7 @@ class Settings(BaseSettings):
 
     DISCORD_WEBHOOK_URL: str = ""
 
+    SENTRY_DSN: str = ""
+
 
 settings = Settings()
