@@ -86,3 +86,9 @@ async def health():
         "version": "0.1.0",
         "database": db_status,
     }
+
+
+# Temporary: verifies the Sentry → Discord alert chain. Remove after testing.
+@app.get("/sentry-debug")
+async def trigger_error():
+    return 1 / 0
