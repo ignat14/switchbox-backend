@@ -1,17 +1,21 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.models import User
 from app.database import get_db
+from app.environments import connection as env_connection
 from app.environments import service as env_service
 from app.environments.schemas import (
+    EnvironmentConnectionResponse,
     EnvironmentCreate,
     EnvironmentReorder,
     EnvironmentResponse,
     EnvironmentUpdate,
 )
 from app.middleware.auth import get_current_user
+from app.projects.models import Project
 
 router = APIRouter(tags=["environments"], dependencies=[Depends(get_current_user)])
 
@@ -62,6 +66,25 @@ async def update_environment(
     db: AsyncSession = Depends(get_db),
 ):
     return await env_service.update_environment(db, environment_id, body)
+
+
+@router.get(
+    "/environments/{environment_id}/connection",
+    response_model=EnvironmentConnectionResponse,
+)
+async def get_environment_connection(
+    environment_id: UUID,
+    user: User | None = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    env = await env_service.get_environment(db, environment_id)
+    # Ownership scoping (admin token sees everything). The rest of the API
+    # gets this uniformly with SEC-1/REF-1; new endpoints start scoped.
+    if user is not None:
+        project = await db.get(Project, env.project_id)
+        if project is None or project.user_id != user.id:
+            raise HTTPException(status_code=404, detail="Environment not found")
+    return await env_connection.get_connection(env)
 
 
 @router.post(

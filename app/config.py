@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     R2_SECRET_ACCESS_KEY: str = ""
     R2_BUCKET_NAME: str = "switchbox-configs"
 
+    # Cloudflare KV read access for the SDK connection badge (Phase 4).
+    # The KV namespace is written by switchbox-worker-cdn (conn:{sdk_key}).
+    CF_KV_API_TOKEN: str = ""
+    CF_KV_NAMESPACE_ID: str = ""
+
     GITHUB_CLIENT_ID: str = ""
     GITHUB_CLIENT_SECRET: str = ""
     JWT_SECRET: str = ""
